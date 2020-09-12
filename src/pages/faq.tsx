@@ -1,6 +1,6 @@
 import { GetStaticProps } from "next";
 import { openDb } from "../openDB";
-import { FaqModel } from "../api/Faq";
+import { FaqModel } from "../../api/Faq";
 import {
   Accordion,
   AccordionSummary,
