@@ -29,14 +29,16 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-interface HomeProps {
+interface SearchProps {
   makes: Make[];
   models: Model[];
+  singleColumn?: boolean;
 }
 
-export default function Home({ makes, models }: HomeProps) {
+export default function Search({ makes, models, singleColumn }: SearchProps) {
   const styles = useStyles();
   const { query } = useRouter();
+  const smValue = singleColumn ? 12 : 6 
 
   const initialValues = {
     make: getAsString(query.make) || "all",
@@ -53,7 +55,7 @@ export default function Home({ makes, models }: HomeProps) {
       onSubmit={(values) => {
         router.push(
           {
-            pathname: "/",
+            pathname: "/cars",
             query: { ...values, page: 1 },
           },
           undefined,
@@ -65,7 +67,7 @@ export default function Home({ makes, models }: HomeProps) {
         <Form>
           <Paper elevation={5} className={styles.paper}>
             <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={smValue}>
                 <FormControl fullWidth variant="outlined">
                   <InputLabel htmlFor="search-make-label">Make</InputLabel>
                   <Field
@@ -85,10 +87,10 @@ export default function Home({ makes, models }: HomeProps) {
                   </Field>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={smValue}>
                 <ModelSelect name="model" make={values.make} models={models} />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={smValue}>
                 <FormControl fullWidth variant="outlined">
                   <InputLabel htmlFor="search-minPrice-label">
                     Min Price
@@ -110,7 +112,7 @@ export default function Home({ makes, models }: HomeProps) {
                   </Field>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={smValue}>
                 <FormControl fullWidth variant="outlined">
                   <InputLabel htmlFor="search-maxPrice-label">
                     Max Price
@@ -173,6 +175,7 @@ export function ModelSelect({ models, make, ...props }: ModelSelectProps) {
         setFieldValue("model", "all");
       }
     },
+    dedupingInterval: 60000,
   });
   const newModels = data || models;
 
