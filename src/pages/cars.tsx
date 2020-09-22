@@ -1,20 +1,18 @@
 import { Grid } from "@material-ui/core";
+import deepEqual from "fast-deep-equal";
 import { GetServerSideProps } from "next";
-
+import { useRouter } from "next/router";
+import { stringify } from "querystring";
+import { useState } from "react";
+import useSWR from "swr";
+import { CarCard } from "../components/CarCard";
+import { CarPagination } from "../components/CarPagination";
 import { getMakes, Make } from "../database/getMakes";
 import { getModels, Model } from "../database/getModels";
-import Pagination, {
-  PaginationRenderItemParams,
-} from "@material-ui/lab/Pagination";
-import PaginationItem from "@material-ui/lab/PaginationItem";
-
-import Search from "./index";
+import { getPaginatedCars } from "../database/getPaginatedCars";
 import { getAsString } from "../getAsString";
 import { CarModel } from "./api/Car";
-import { getPaginatedCars } from "../database/getPaginatedCars";
-import { useRouter } from "next/router";
-import Link from "next/link";
-import { ParsedUrlQuery } from "querystring";
+import Search from "./index";
 
 export interface CarsListProps {
   makes: Make[];
@@ -29,44 +27,32 @@ export default function CarsList({
   totalPages,
 }: CarsListProps) {
   const { query } = useRouter();
+  const [serverQuery] = useState(query);
+  const { data } = useSWR(`/api/cars?${stringify(query)}`, {
+    initialData: deepEqual(query, serverQuery)
+      ? { cars, totalPages }
+      : undefined,
+    dedupingInterval: 15000,
+  });
   return (
     <Grid container spacing={3}>
       <Grid item xs={12} sm={5} md={3}>
         <Search makes={makes} models={models} singleColumn />
       </Grid>
-      <Grid item xs={12} sm={7} md={9}>
-        <Pagination
-          page={parseInt(getAsString(query.page || "1"))}
-          count={totalPages}
-          renderItem={(item) => (
-            <PaginationItem
-              component={MaterialUILink}
-              query={query}
-              item={item}
-              {...item}
-            />
-          )}
-        />
-        <pre>{JSON.stringify({ cars, totalPages }, null, 4)}</pre>
+      <Grid container spacing={2} item xs={12} sm={7} md={9}>
+        <Grid item xs={12}>
+          <CarPagination totalPages={data?.totalPages} />
+        </Grid>
+        {(data?.cars || []).map((car) => (
+          <Grid key={car.id} item xs={12} sm={6}>
+            <CarCard car={car} />
+          </Grid>
+        ))}
+        <Grid item xs={12}>
+          <CarPagination totalPages={data?.totalPages} />
+        </Grid>
       </Grid>
     </Grid>
-  );
-}
-
-export interface MaterialUILinkProps {
-  query: ParsedUrlQuery;
-  item: PaginationRenderItemParams;
-}
-export function MaterialUILink({ query, item, ...props }: MaterialUILinkProps) {
-  return (
-    <Link
-      href={{
-        pathname: "/cars",
-        query: { ...query, page: item.page },
-      }}
-    >
-      <a {...props}></a>
-    </Link>
   );
 }
 
